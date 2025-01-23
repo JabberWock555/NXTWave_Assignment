@@ -15,18 +15,19 @@ Welcome to the NXTWave Assignment showcasing a **Gesture-based Object Interactio
 - **Purple Pinch**: Grab barrels on the left side of the table using a pinch gesture.
 - **Red Palm**: Grab barrels using a palm gesture.
 
-![Barrel Interaction](Screenshot_2025-01-24_at_2.15.52_AM.png)
+<img width="951" alt="Image" src="https://github.com/user-attachments/assets/5f5843e0-3bad-4493-b289-759f18c646e6" />
 
 ### 2. Crate Interaction
 - **Red Button**: Press the red button to open and close the crate in front of you.
 - **Gun Rotation**: While the crate is open, swipe your hand over the trackpad to rotate the gun inside.
 
-![Crate Interaction](Screenshot_2025-01-24_at_2.16.17_AM.png)
+
+<img width="951" alt="Image" src="https://github.com/user-attachments/assets/5484de4b-c67e-4f8a-8f1b-a1b1cef8c995" />
 
 ### 3. Gun Rotation
 - **Trackpad Swipe**: Hover over the trackpad and swipe to rotate the gun inside the crate.
 
-![Gun Rotation](Screenshot_2025-01-24_at_2.17.02_AM.png)
+<img width="951" alt="Image" src="https://github.com/user-attachments/assets/85d5af80-4da0-4952-aaca-8cb0f23ed0d0" />
 
 ## Setup Instructions
 
