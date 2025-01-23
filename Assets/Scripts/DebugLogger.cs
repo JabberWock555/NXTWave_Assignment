@@ -1,5 +1,7 @@
 using UnityEngine;
 using TMPro;
+using System.Collections;
+using System.Collections.Generic;
 
 public class DebugLogger : MonoBehaviour
 {
@@ -13,6 +15,8 @@ public class DebugLogger : MonoBehaviour
 
     private static DebugLogger instance;
     private string currentLog = "";
+
+    private Queue<string> logQueue = new Queue<string>();
 
     void Awake()
     {
@@ -50,14 +54,17 @@ public class DebugLogger : MonoBehaviour
     /// <param name="message">Message to append.</param>
     private void AppendLog(string message)
     {
+        logQueue.Enqueue(message);
+        if (logQueue.Count > maxLines)
+        {
+            logQueue.Dequeue();
+        }
+
         currentLog += $"{message}\n";
 
         // Limit log lines to maxLines
         string[] lines = currentLog.Split('\n');
-        if (lines.Length > maxLines)
-        {
-            currentLog = string.Join("\n", lines, lines.Length - maxLines, maxLines);
-        }
+        currentLog = string.Join("\n", lines, lines.Length - maxLines, maxLines);
 
         // Update TextMeshPro text
         if (logText != null)

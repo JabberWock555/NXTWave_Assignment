@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class SwipeGesture : MonoBehaviour
@@ -15,87 +16,8 @@ public class SwipeGesture : MonoBehaviour
     [SerializeField] private float rotationSpeed = 100f; // Rotation speed for the object
     private bool swipeRegistered = false; // Ensures a swipe is registered only once per gesture
 
-    void Start()
-    {
-        swipeTrackingRegion = GetComponent<Collider>();
-        material = objectToRotate.GetComponent<Renderer>().material;
-    }
+    private Queue<Vector3> swipeQueue = new Queue<Vector3>();
 
-
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Hand")) // Assuming the hand is tagged as "Hand"
-        {
-            isSwiping = true;
-            swipeRegistered = false; // Reset the swipe flag
-            initialPosition = other.transform.position; // Start tracking the swipe
-            material.color = Color.magenta;
-        }
-    }
-
-    void OnTriggerStay(Collider other)
-    {
-        material.color = Color.cyan;
-        if (isSwiping && other.CompareTag("Hand") && !swipeRegistered)
-        {
-            finalPosition = other.transform.position; // Update the final position
-            Vector3 delta = finalPosition - initialPosition;
-
-            if (delta.magnitude > swipeThreshold) // Check if swipe distance exceeds threshold
-            {
-                if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y)) // Horizontal swipe
-                {
-                    if (delta.x < 0) // Left swipe
-                    {
-                        RotateObjectLeft();
-                    }
-                    else // Right swipe
-                    {
-                        RotateObjectRight();
-                    }
-                }
-                else // Vertical swipe
-                {
-                    if (delta.y > 0) // Up swipe
-                    {
-                        RotateObjectUp();
-                    }
-                }
-
-                swipeRegistered = true; // Prevent multiple swipes during the same gesture
-            }
-        }
-    }
-
-    void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Hand"))
-        {
-            isSwiping = false; // Stop tracking the swipe
-            material.color = Color.grey;
-        }
-    }
-
-    void RotateObjectLeft()
-    {
-        Debug.Log("Swipe Left - Rotating Object by 90 Degrees");
-        objectToRotate.transform.Rotate(Vector3.up, -90f); // Rotate 90 degrees to the left
-    }
-
-    void RotateObjectRight()
-    {
-        Debug.Log("Swipe Right - Rotating Object by 90 Degrees");
-        objectToRotate.transform.Rotate(Vector3.up, 90f); // Rotate 90 degrees to the right
-    }
-
-    void RotateObjectUp()
-    {
-        Debug.Log("Swipe Up - Rotating Object by 90 Degrees");
-        objectToRotate.transform.Rotate(Vector3.right, 90f); // Rotate 90 degrees upward
-    }
-
-}
-/* 
     void Start()
     {
         swipeTrackingRegion = GetComponent<Collider>();
@@ -110,6 +32,7 @@ public class SwipeGesture : MonoBehaviour
         {
             StartSwipeGesture(other);
             material.color = Color.magenta;
+
         }
     }
 
@@ -117,8 +40,9 @@ public class SwipeGesture : MonoBehaviour
     {
         if (other.CompareTag("Hand")) // Continue detecting gestures while the hand is in the collider
         {
-            DetectSwipeGesture(other);
-            material.color = Color.cyan;
+            Transform handTransform = other.transform.parent;
+            DetectSwipeGesture(handTransform);
+            //material.color = Color.cyan;
 
         }
     }
@@ -129,66 +53,85 @@ public class SwipeGesture : MonoBehaviour
         {
             ResetSwipeGesture();
             material.color = Color.grey;
+            swipeQueue.Clear();
         }
     }
 
     void StartSwipeGesture(Collider handCollider)
     {
         // Start tracking the swipe when the hand enters the region
-        initialPosition = handCollider.transform.position;
+        initialPosition = handCollider.transform.parent.position;
         isSwiping = true;
     }
 
-    void DetectSwipeGesture(Collider handCollider)
+    void DetectSwipeGesture(Transform handCollider)
     {
         if (isSwiping)
         {
-            finalPosition = handCollider.transform.position;
-            Vector3 delta = finalPosition - initialPosition;
 
-            if (delta.magnitude > swipeThreshold) // Check if swipe distance exceeds the threshold
+            if (swipeQueue.Count < 10)
             {
-                RotateObjectBasedOnSwipe(delta);
-                ResetSwipeGesture(); // Reset after detecting a swipe
+                swipeQueue.Enqueue(handCollider.position);
+                return;
             }
+            else
+            {
+                initialPosition = swipeQueue.Dequeue();
+                finalPosition = handCollider.position;
+                Vector3 delta = finalPosition - initialPosition;
 
-            initialPosition = finalPosition; // Update the initial position for the next swipe
+
+                //finalPosition = handCollider.position;
+
+                if (delta.magnitude > swipeThreshold) // Check if swipe distance exceeds the threshold
+                {
+                    RotateObjectBasedOnSwipe(delta);
+                    //ResetSwipeGesture(); // Reset after detecting a swipe
+                }
+
+                swipeQueue.Enqueue(finalPosition);
+                //            initialPosition = finalPosition; // Update the initial position for the next swipe
+            }
         }
     }
 
     void RotateObjectBasedOnSwipe(Vector3 delta)
     {
-        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+        Vector3 swipeDirection = Vector3.zero;
+        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.z))
         {
             if (delta.x > 0)
             {
                 Debug.Log("Swipe Right");
-                RotateObject(Vector3.up); // Rotate clockwise
+                swipeDirection = Vector3.up;
             }
             else
             {
                 Debug.Log("Swipe Left");
-                RotateObject(Vector3.down); // Rotate counter-clockwise
+                swipeDirection = Vector3.down;
             }
         }
         else
         {
-            if (delta.y > 0)
+            if (delta.z > 0)
             {
                 Debug.Log("Swipe Up");
-                RotateObject(Vector3.right); // Rotate upward
+                swipeDirection = Vector3.right;
             }
             else
             {
                 Debug.Log("Swipe Down");
-                RotateObject(Vector3.left); // Rotate downward
+                swipeDirection = Vector3.left;
             }
         }
+        RotateObject(swipeDirection, delta.magnitude);
     }
 
-    void RotateObject(Vector3 rotationAxis)
+    void RotateObject(Vector3 rotationAxis, float delatMagnitude)
     {
-        objectToRotate.transform.Rotate(rotationAxis * rotationSpeed * Time.deltaTime);
+        if (rotationAxis == null) return;
+
+        objectToRotate.transform.Rotate(rotationAxis * delatMagnitude * rotationSpeed * Time.deltaTime);
     }
 
     void ResetSwipeGesture()
@@ -196,4 +139,8 @@ public class SwipeGesture : MonoBehaviour
         isSwiping = false;
         initialPosition = Vector3.zero;
         finalPosition = Vector3.zero;
-    } */
+    }
+
+}
+/* 
+    */
